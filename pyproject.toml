@@ -504,6 +504,12 @@ exclude = [
 ]
 plugins = ["pydantic.mypy"]
 
+# `eth-remerkleable` ships no type information (no py.typed); treat its imports
+# as untyped instead of vendoring stubs.
+[[tool.mypy.overrides]]
+module = "remerkleable.*"
+ignore_missing_imports = true
+
 [tool.uv]
 required-version = ">=0.7.0"
 extra-build-dependencies = { ethash = ["setuptools", "cmake>=4.2.1,<5"] }
