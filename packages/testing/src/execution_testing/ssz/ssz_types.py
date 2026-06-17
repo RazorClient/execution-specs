@@ -6,7 +6,7 @@ from .constants import BYTES_PER_LOGS_BLOOM
 
 
 class Hash32(ByteVector[32]):
-    """A 32-byte hash (`Hash32`, `Root` and `Bytes32` share this layout)."""
+    """A 32-byte hash."""
 
 
 class Bytes32(ByteVector[32]):
@@ -30,12 +30,12 @@ class VersionedHash(ByteVector[32]):
 
 
 class Bytes8(ByteVector[8]):
-    """An 8-byte value (e.g. `payload_id`)."""
+    """An 8-byte value."""
 
 
 class Bytes4(ByteVector[4]):
-    """A 4-byte value (e.g. a client commit hash)."""
+    """A 4-byte value."""
 
 
 class Bytes48(ByteVector[48]):
-    """A 48-byte value (KZG commitments and proofs)."""
+    """A 48-byte value."""
