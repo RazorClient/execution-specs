@@ -15,12 +15,8 @@ from .constants import (
     MAX_WITHDRAWALS_PER_PAYLOAD,
 )
 from .containers import (
-    BUILT_PAYLOAD_BY_FORK,
-    EXECUTION_PAYLOAD_BODY_BY_FORK,
     EXECUTION_PAYLOAD_BY_FORK,
     EXECUTION_PAYLOAD_ENVELOPE_BY_FORK,
-    FORKCHOICE_UPDATE_BY_FORK,
-    PAYLOAD_ATTRIBUTES_BY_FORK,
     BlobAndProofV1,
     BlobAndProofV2,
     BlobCellsAndProofs,
@@ -208,12 +204,8 @@ def envelope_bytes(
 
 
 __all__ = (
-    "BUILT_PAYLOAD_BY_FORK",
-    "EXECUTION_PAYLOAD_BODY_BY_FORK",
     "EXECUTION_PAYLOAD_BY_FORK",
     "EXECUTION_PAYLOAD_ENVELOPE_BY_FORK",
-    "FORKCHOICE_UPDATE_BY_FORK",
-    "PAYLOAD_ATTRIBUTES_BY_FORK",
     "Address",
     "BlobAndProofV1",
     "BlobAndProofV2",
