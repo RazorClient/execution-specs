@@ -13,15 +13,6 @@ from .constants import (
     MAX_EXTRA_DATA_BYTES,
     MAX_TXS_PER_PAYLOAD,
     MAX_WITHDRAWALS_PER_PAYLOAD,
-    Address,
-    Bloom,
-    Bytes4,
-    Bytes8,
-    Bytes32,
-    Bytes48,
-    Hash32,
-    Root,
-    VersionedHash,
 )
 from .containers import (
     BUILT_PAYLOAD_BY_FORK,
@@ -96,6 +87,17 @@ from .random_value import (
     RandomizationMode,
     deterministic_seed,
     get_random_ssz_object,
+)
+from .ssz_types import (
+    Address,
+    Bloom,
+    Bytes4,
+    Bytes8,
+    Bytes32,
+    Bytes48,
+    Hash32,
+    Root,
+    VersionedHash,
 )
 
 ViewT = TypeVar("ViewT", bound=View)
@@ -285,8 +287,6 @@ __all__ = (
     "PayloadAttributesPrague",
     "PayloadAttributesShanghai",
     "PayloadStatus",
-    "REFERENCE_SPEC_GIT_PATH",
-    "REFERENCE_SPEC_VERSION",
     "RandomizationMode",
     "Root",
     "VersionedHash",

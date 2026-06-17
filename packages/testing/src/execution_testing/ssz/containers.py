@@ -30,6 +30,8 @@ from .constants import (
     MAX_EXTRA_DATA_BYTES,
     MAX_TXS_PER_PAYLOAD,
     MAX_WITHDRAWALS_PER_PAYLOAD,
+)
+from .ssz_types import (
     Address,
     Bloom,
     Bytes4,
