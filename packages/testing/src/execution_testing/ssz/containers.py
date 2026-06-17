@@ -313,16 +313,6 @@ class PayloadAttributesAmsterdam(Container):
     target_gas_limit: uint64
 
 
-PAYLOAD_ATTRIBUTES_BY_FORK: Dict[str, Type[Container]] = {
-    "Paris": PayloadAttributesParis,
-    "Shanghai": PayloadAttributesShanghai,
-    "Cancun": PayloadAttributesCancun,
-    "Prague": PayloadAttributesPrague,
-    "Osaka": PayloadAttributesOsaka,
-    "Amsterdam": PayloadAttributesAmsterdam,
-}
-
-
 class ForkchoiceState(Container):
     """The forkchoice head/safe/finalized triple."""
 
@@ -382,16 +372,6 @@ class ForkchoiceUpdateAmsterdam(Container):
     custody_columns: List[Bitvector[CELLS_PER_EXT_BLOB], 1]
 
 
-FORKCHOICE_UPDATE_BY_FORK: Dict[str, Type[Container]] = {
-    "Paris": ForkchoiceUpdateParis,
-    "Shanghai": ForkchoiceUpdateShanghai,
-    "Cancun": ForkchoiceUpdateCancun,
-    "Prague": ForkchoiceUpdatePrague,
-    "Osaka": ForkchoiceUpdateOsaka,
-    "Amsterdam": ForkchoiceUpdateAmsterdam,
-}
-
-
 class ForkchoiceUpdateResponse(Container):
     """The forkchoice response: a status and an optional payload id."""
 
@@ -439,16 +419,6 @@ class ExecutionPayloadBodyAmsterdam(Container):
     transactions: List[ByteList[MAX_BYTES_PER_TX], MAX_TXS_PER_PAYLOAD]
     withdrawals: List[Withdrawal, MAX_WITHDRAWALS_PER_PAYLOAD]
     block_access_list: ByteList[MAX_BAL_BYTES]
-
-
-EXECUTION_PAYLOAD_BODY_BY_FORK: Dict[str, Type[Container]] = {
-    "Paris": ExecutionPayloadBodyParis,
-    "Shanghai": ExecutionPayloadBodyShanghai,
-    "Cancun": ExecutionPayloadBodyCancun,
-    "Prague": ExecutionPayloadBodyPrague,
-    "Osaka": ExecutionPayloadBodyOsaka,
-    "Amsterdam": ExecutionPayloadBodyAmsterdam,
-}
 
 
 class BlobsBundleV1(Container):
@@ -528,16 +498,6 @@ class BuiltPayloadAmsterdam(Container):
         MAX_EXECUTION_REQUESTS_PER_PAYLOAD,
     ]
     should_override_builder: boolean
-
-
-BUILT_PAYLOAD_BY_FORK: Dict[str, Type[Container]] = {
-    "Paris": BuiltPayloadParis,
-    "Shanghai": BuiltPayloadShanghai,
-    "Cancun": BuiltPayloadCancun,
-    "Prague": BuiltPayloadPrague,
-    "Osaka": BuiltPayloadOsaka,
-    "Amsterdam": BuiltPayloadAmsterdam,
-}
 
 
 class BlobAndProofV1(Container):

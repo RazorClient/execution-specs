@@ -6,16 +6,72 @@ import pytest
 
 from .. import decode_bytes, encode_bytes, envelope_bytes
 from ..containers import (
-    BUILT_PAYLOAD_BY_FORK,
-    EXECUTION_PAYLOAD_BODY_BY_FORK,
-    FORKCHOICE_UPDATE_BY_FORK,
-    PAYLOAD_ATTRIBUTES_BY_FORK,
+    BuiltPayloadAmsterdam,
+    BuiltPayloadCancun,
+    BuiltPayloadOsaka,
+    BuiltPayloadParis,
+    BuiltPayloadPrague,
+    BuiltPayloadShanghai,
+    ExecutionPayloadBodyAmsterdam,
+    ExecutionPayloadBodyCancun,
+    ExecutionPayloadBodyOsaka,
+    ExecutionPayloadBodyParis,
+    ExecutionPayloadBodyPrague,
+    ExecutionPayloadBodyShanghai,
     ExecutionPayloadEnvelopeAmsterdam,
     ExecutionPayloadEnvelopeParis,
+    ForkchoiceUpdateAmsterdam,
+    ForkchoiceUpdateCancun,
+    ForkchoiceUpdateOsaka,
+    ForkchoiceUpdateParis,
+    ForkchoiceUpdatePrague,
+    ForkchoiceUpdateShanghai,
+    PayloadAttributesAmsterdam,
+    PayloadAttributesCancun,
+    PayloadAttributesOsaka,
+    PayloadAttributesParis,
+    PayloadAttributesPrague,
+    PayloadAttributesShanghai,
     PayloadStatus,
 )
 
 _FORKS = ["Paris", "Shanghai", "Cancun", "Prague", "Osaka", "Amsterdam"]
+
+PAYLOAD_ATTRIBUTES_BY_FORK = {
+    "Paris": PayloadAttributesParis,
+    "Shanghai": PayloadAttributesShanghai,
+    "Cancun": PayloadAttributesCancun,
+    "Prague": PayloadAttributesPrague,
+    "Osaka": PayloadAttributesOsaka,
+    "Amsterdam": PayloadAttributesAmsterdam,
+}
+
+FORKCHOICE_UPDATE_BY_FORK = {
+    "Paris": ForkchoiceUpdateParis,
+    "Shanghai": ForkchoiceUpdateShanghai,
+    "Cancun": ForkchoiceUpdateCancun,
+    "Prague": ForkchoiceUpdatePrague,
+    "Osaka": ForkchoiceUpdateOsaka,
+    "Amsterdam": ForkchoiceUpdateAmsterdam,
+}
+
+EXECUTION_PAYLOAD_BODY_BY_FORK = {
+    "Paris": ExecutionPayloadBodyParis,
+    "Shanghai": ExecutionPayloadBodyShanghai,
+    "Cancun": ExecutionPayloadBodyCancun,
+    "Prague": ExecutionPayloadBodyPrague,
+    "Osaka": ExecutionPayloadBodyOsaka,
+    "Amsterdam": ExecutionPayloadBodyAmsterdam,
+}
+
+BUILT_PAYLOAD_BY_FORK = {
+    "Paris": BuiltPayloadParis,
+    "Shanghai": BuiltPayloadShanghai,
+    "Cancun": BuiltPayloadCancun,
+    "Prague": BuiltPayloadPrague,
+    "Osaka": BuiltPayloadOsaka,
+    "Amsterdam": BuiltPayloadAmsterdam,
+}
 
 
 def test_new_registries_cover_forks_in_order() -> None:
