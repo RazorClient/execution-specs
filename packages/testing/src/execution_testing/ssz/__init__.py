@@ -100,9 +100,6 @@ from .random_value import (
 
 ViewT = TypeVar("ViewT", bound=View)
 
-REFERENCE_SPEC_GIT_PATH = "src/engine/refactor-ssz.md"
-REFERENCE_SPEC_VERSION = "4e0fed12d3ebc9d1ca8829331a82b97b1d1bd154"
-
 
 def encode_bytes(value: View) -> bytes:
     """Serialize an SSZ value to its canonical byte encoding."""

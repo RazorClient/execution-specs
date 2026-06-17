@@ -502,12 +502,12 @@ class BuiltPayloadParis(Container):
     block_value: uint256
 
 
+# Should not have the should_override_builder field,wrong in spec pr 793
 class BuiltPayloadShanghai(Container):
     """The Shanghai getPayload response."""
 
     payload: ExecutionPayloadShanghai
     block_value: uint256
-    should_override_builder: boolean
 
 
 class BuiltPayloadCancun(Container):
