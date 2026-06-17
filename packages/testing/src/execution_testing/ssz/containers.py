@@ -54,9 +54,7 @@ class Withdrawal(Container):
 
 
 class ExecutionPayloadParis(Container):
-    """
-    The Paris execution payload.
-    """
+    """The Paris execution payload."""
 
     parent_hash: Hash32
     fee_recipient: Address
@@ -75,9 +73,7 @@ class ExecutionPayloadParis(Container):
 
 
 class ExecutionPayloadShanghai(Container):
-    """
-    The Shanghai execution payload.
-    """
+    """The Shanghai execution payload."""
 
     parent_hash: Hash32
     fee_recipient: Address
@@ -97,9 +93,7 @@ class ExecutionPayloadShanghai(Container):
 
 
 class ExecutionPayloadCancun(Container):
-    """
-    The Cancun execution payload.
-    """
+    """The Cancun execution payload."""
 
     parent_hash: Hash32
     fee_recipient: Address
@@ -121,9 +115,7 @@ class ExecutionPayloadCancun(Container):
 
 
 class ExecutionPayloadPrague(Container):
-    """
-    The Prague execution payload.
-    """
+    """The Prague execution payload."""
 
     parent_hash: Hash32
     fee_recipient: Address
@@ -145,9 +137,7 @@ class ExecutionPayloadPrague(Container):
 
 
 class ExecutionPayloadOsaka(Container):
-    """
-    The Osaka execution payload.
-    """
+    """The Osaka execution payload."""
 
     parent_hash: Hash32
     fee_recipient: Address
@@ -169,9 +159,7 @@ class ExecutionPayloadOsaka(Container):
 
 
 class ExecutionPayloadAmsterdam(Container):
-    """
-    The Amsterdam execution payload.
-    """
+    """The Amsterdam execution payload."""
 
     parent_hash: Hash32
     fee_recipient: Address
@@ -205,34 +193,26 @@ EXECUTION_PAYLOAD_BY_FORK: Dict[str, Type[Container]] = {
 
 
 class ExecutionPayloadEnvelopeParis(Container):
-    """
-    The Paris `newPayload` envelope.
-    """
+    """The Paris `newPayload` envelope."""
 
     payload: ExecutionPayloadParis
 
 
 class ExecutionPayloadEnvelopeShanghai(Container):
-    """
-    The Shanghai `newPayload` envelope.
-    """
+    """The Shanghai `newPayload` envelope."""
 
     payload: ExecutionPayloadShanghai
 
 
 class ExecutionPayloadEnvelopeCancun(Container):
-    """
-    The Cancun `newPayload` envelope.
-    """
+    """The Cancun `newPayload` envelope."""
 
     payload: ExecutionPayloadCancun
     parent_beacon_block_root: Root
 
 
 class ExecutionPayloadEnvelopePrague(Container):
-    """
-    The Prague `newPayload` envelope.
-    """
+    """The Prague `newPayload` envelope."""
 
     payload: ExecutionPayloadPrague
     parent_beacon_block_root: Root
@@ -243,9 +223,7 @@ class ExecutionPayloadEnvelopePrague(Container):
 
 
 class ExecutionPayloadEnvelopeOsaka(Container):
-    """
-    The Osaka `newPayload` envelope.
-    """
+    """The Osaka `newPayload` envelope."""
 
     payload: ExecutionPayloadOsaka
     parent_beacon_block_root: Root
@@ -256,9 +234,7 @@ class ExecutionPayloadEnvelopeOsaka(Container):
 
 
 class ExecutionPayloadEnvelopeAmsterdam(Container):
-    """
-    The Amsterdam `newPayload` envelope.
-    """
+    """The Amsterdam `newPayload` envelope."""
 
     payload: ExecutionPayloadAmsterdam
     parent_beacon_block_root: Root
@@ -356,13 +332,7 @@ class ForkchoiceState(Container):
 
 
 class PayloadStatus(Container):
-    """
-    A newPayload/forkchoice status.
-
-    ``status`` is a uint8 enum (0=VALID, 1=INVALID, 2=SYNCING, 3=ACCEPTED).
-    ``latest_valid_hash`` is ``Optional[Hash32]`` and ``validation_error`` is
-    ``Optional[String]``.
-    """
+    """A newPayload/forkchoice status."""
 
     status: uint8
     latest_valid_hash: List[Hash32, 1]
@@ -522,9 +492,7 @@ class BuiltPayloadCancun(Container):
 
 
 class BuiltPayloadPrague(Container):
-    """
-    The Prague getPayload response.
-    """
+    """The Prague getPayload response."""
 
     payload: ExecutionPayloadPrague
     block_value: uint256
@@ -587,10 +555,7 @@ class BlobAndProofV2(Container):
 
 
 class BlobCellsAndProofs(Container):
-    """
-    Cell-range blob contents (/blobs/v4, Amsterdam).
-    Each cell and proof is ``Optional``.
-    """
+    """Cell-range blob contents for /blobs/v4 (cells/proofs optional)."""
 
     blob_cells: List[List[ByteVector[BYTES_PER_CELL], 1], CELLS_PER_EXT_BLOB]
     proofs: List[List[Bytes48, 1], CELLS_PER_EXT_BLOB]
@@ -603,9 +568,7 @@ class BodiesByHashRequest(Container):
 
 
 class BodyEntry(Container):
-    """
-    One bodies-response entry.
-    """
+    """One bodies-response entry."""
 
     available: boolean
     body: ExecutionPayloadBodyAmsterdam
