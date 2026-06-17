@@ -1,5 +1,7 @@
 """Round-trip and structural tests for the SSZ containers."""
 
+from remerkleable.basic import uint64, uint256
+
 from .. import decode_bytes, encode_bytes, hash_tree_root
 from ..containers import (
     EXECUTION_PAYLOAD_BY_FORK,
@@ -8,6 +10,7 @@ from ..containers import (
     ExecutionPayloadEnvelopeAmsterdam,
     Withdrawal,
 )
+from ..ssz_types import Address, Bloom, Bytes32, Hash32, Root
 
 TRANSACTIONS = [
     bytes.fromhex("02f86b01"),
@@ -18,43 +21,43 @@ TRANSACTIONS = [
 
 def _withdrawal() -> Withdrawal:
     return Withdrawal(
-        index=7,
-        validator_index=42,
-        address=bytes.fromhex("11" * 20),
-        amount=32_000_000_000,
+        index=uint64(7),
+        validator_index=uint64(42),
+        address=Address(bytes.fromhex("11" * 20)),
+        amount=uint64(32_000_000_000),
     )
 
 
-def _max_payload() -> ExecutionPayloadAmsterdam:
-    """The maximal (Amsterdam) payload: populated, carrying every field."""
+def _random_payload() -> ExecutionPayloadAmsterdam:
+    """A fully-populated payload carrying every field of the latest fork."""
     return ExecutionPayloadAmsterdam(
-        parent_hash=bytes.fromhex("aa" * 32),
-        fee_recipient=bytes.fromhex("bb" * 20),
-        state_root=bytes.fromhex("cc" * 32),
-        receipts_root=bytes.fromhex("dd" * 32),
-        logs_bloom=bytes.fromhex("00" * 256),
-        prev_randao=bytes.fromhex("ee" * 32),
-        block_number=21_000_000,
-        gas_limit=30_000_000,
-        gas_used=21_000,
-        timestamp=1_700_000_000,
+        parent_hash=Hash32(bytes.fromhex("aa" * 32)),
+        fee_recipient=Address(bytes.fromhex("bb" * 20)),
+        state_root=Hash32(bytes.fromhex("cc" * 32)),
+        receipts_root=Hash32(bytes.fromhex("dd" * 32)),
+        logs_bloom=Bloom(bytes.fromhex("00" * 256)),
+        prev_randao=Bytes32(bytes.fromhex("ee" * 32)),
+        block_number=uint64(21_000_000),
+        gas_limit=uint64(30_000_000),
+        gas_used=uint64(21_000),
+        timestamp=uint64(1_700_000_000),
         extra_data=bytes.fromhex("dead"),
-        base_fee_per_gas=10**18,
-        block_hash=bytes.fromhex("ff" * 32),
+        base_fee_per_gas=uint256(10**18),
+        block_hash=Hash32(bytes.fromhex("ff" * 32)),
         transactions=list(TRANSACTIONS),
         withdrawals=[_withdrawal()],
-        blob_gas_used=131_072,
-        excess_blob_gas=0,
+        blob_gas_used=uint64(131_072),
+        excess_blob_gas=uint64(0),
         block_access_list=bytes.fromhex("c0de"),
-        slot_number=9_999,
+        slot_number=uint64(9_999),
     )
 
 
 def _max_envelope() -> ExecutionPayloadEnvelopeAmsterdam:
-    """The maximal (Amsterdam) envelope wrapping :func:`_max_payload`."""
+    """A fully-populated envelope wrapping :func:`_random_payload`."""
     return ExecutionPayloadEnvelopeAmsterdam(
-        payload=_max_payload(),
-        parent_beacon_block_root=bytes.fromhex("12" * 32),
+        payload=_random_payload(),
+        parent_beacon_block_root=Root(bytes.fromhex("12" * 32)),
         execution_requests=[bytes.fromhex("00aa"), bytes.fromhex("01bbcc")],
     )
 
@@ -68,7 +71,7 @@ def test_withdrawal_round_trip() -> None:
 
 def test_payload_round_trip() -> None:
     """An execution payload survives encode -> decode unchanged."""
-    value = _max_payload()
+    value = _random_payload()
     raw = encode_bytes(value)
     assert decode_bytes(ExecutionPayloadAmsterdam, raw) == value
 
@@ -93,11 +96,11 @@ def test_transactions_two_level_offsets() -> None:
     Transactions of differing lengths round-trip exactly, and reordering them
     changes the root -- the inner offset table is order- and length-sensitive.
     """
-    value = _max_payload()
+    value = _random_payload()
     decoded = decode_bytes(ExecutionPayloadAmsterdam, encode_bytes(value))
     assert [bytes(tx) for tx in decoded.transactions] == TRANSACTIONS
 
-    reordered = _max_payload()
+    reordered = _random_payload()
     reordered.transactions = list(reversed(TRANSACTIONS))
     assert hash_tree_root(reordered) != hash_tree_root(value)
 
