@@ -2,10 +2,17 @@
 SSZ container types and helpers for the REST+SSZ Engine API.
 """
 
-from typing import Any, Mapping, Sequence, Type, TypeVar
+from typing import Any, Mapping, Sequence
 
 from remerkleable.core import View
 
+from .codec import (
+    decode_bytes,
+    decode_value,
+    encode_bytes,
+    encode_value,
+    hash_tree_root,
+)
 from .constants import (
     MAX_BYTES_PER_EXECUTION_REQUEST,
     MAX_BYTES_PER_TX,
@@ -95,23 +102,6 @@ from .ssz_types import (
     Root,
     VersionedHash,
 )
-
-ViewT = TypeVar("ViewT", bound=View)
-
-
-def encode_bytes(value: View) -> bytes:
-    """Serialize an SSZ value to its canonical byte encoding."""
-    return value.encode_bytes()
-
-
-def decode_bytes(ssz_type: Type[ViewT], data: bytes) -> ViewT:
-    """Deserialize ``data`` into an SSZ value of ``ssz_type``."""
-    return ssz_type.decode_bytes(data)
-
-
-def hash_tree_root(value: View) -> bytes:
-    """Return the 32-byte SSZ `hash_tree_root` of an SSZ value."""
-    return bytes(value.hash_tree_root())
 
 
 def _build(cls: Any, fork: str, candidates: Mapping[str, Any]) -> View:
@@ -284,8 +274,10 @@ __all__ = (
     "VersionedHash",
     "Withdrawal",
     "decode_bytes",
+    "decode_value",
     "deterministic_seed",
     "encode_bytes",
+    "encode_value",
     "envelope_bytes",
     "get_random_ssz_object",
     "hash_tree_root",

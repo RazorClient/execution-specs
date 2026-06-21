@@ -8,6 +8,7 @@ from random import Random
 from typing import Any
 
 from remerkleable.basic import boolean, uint
+from remerkleable.bitfields import Bitlist, Bitvector
 from remerkleable.byte_arrays import ByteList, ByteVector
 from remerkleable.complex import Container, List
 from remerkleable.core import View
@@ -109,6 +110,36 @@ def get_random_ssz_object(
             return _max_basic_value(typ)
         else:
             return _random_basic_value(rng, typ)
+    elif issubclass(typ, Bitvector):
+        # Bit vectors are fixed length; no cap applies.
+        length = typ.vector_length()
+        if mode == RandomizationMode.mode_zero:
+            return typ(*([False] * length))
+        elif mode == RandomizationMode.mode_max:
+            return typ(*([True] * length))
+        else:
+            return typ(*(bool(rng.getrandbits(1)) for _ in range(length)))
+    elif issubclass(typ, Bitlist):
+        cap = min(max_bytes_length, typ.limit())
+        if mode == RandomizationMode.mode_nil_count:
+            length = 0
+        elif mode == RandomizationMode.mode_max_count:
+            length = cap
+        elif mode in (
+            RandomizationMode.mode_one_count,
+            RandomizationMode.mode_zero,
+            RandomizationMode.mode_max,
+        ):
+            length = min(1, typ.limit())
+        else:
+            length = rng.randint(0, cap)
+        if mode == RandomizationMode.mode_zero:
+            bits = [False] * length
+        elif mode == RandomizationMode.mode_max:
+            bits = [True] * length
+        else:
+            bits = [bool(rng.getrandbits(1)) for _ in range(length)]
+        return typ(*bits)
     elif issubclass(typ, List):
         limit = max_list_length
         if typ.limit() < limit:
