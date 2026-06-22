@@ -2,8 +2,6 @@
 SSZ container definitions for the REST+SSZ Engine API.
 """
 
-from typing import Dict, Type
-
 from remerkleable.basic import boolean, uint8, uint64, uint256
 from remerkleable.bitfields import Bitvector
 from remerkleable.byte_arrays import ByteList, ByteVector
@@ -182,16 +180,6 @@ class ExecutionPayloadAmsterdam(Container):
     slot_number: uint64
 
 
-EXECUTION_PAYLOAD_BY_FORK: Dict[str, Type[Container]] = {
-    "Paris": ExecutionPayloadParis,
-    "Shanghai": ExecutionPayloadShanghai,
-    "Cancun": ExecutionPayloadCancun,
-    "Prague": ExecutionPayloadPrague,
-    "Osaka": ExecutionPayloadOsaka,
-    "Amsterdam": ExecutionPayloadAmsterdam,
-}
-
-
 class ExecutionPayloadEnvelopeParis(Container):
     """The Paris `newPayload` envelope."""
 
@@ -242,16 +230,6 @@ class ExecutionPayloadEnvelopeAmsterdam(Container):
         ByteList[MAX_BYTES_PER_EXECUTION_REQUEST],
         MAX_EXECUTION_REQUESTS_PER_PAYLOAD,
     ]
-
-
-EXECUTION_PAYLOAD_ENVELOPE_BY_FORK: Dict[str, Type[Container]] = {
-    "Paris": ExecutionPayloadEnvelopeParis,
-    "Shanghai": ExecutionPayloadEnvelopeShanghai,
-    "Cancun": ExecutionPayloadEnvelopeCancun,
-    "Prague": ExecutionPayloadEnvelopePrague,
-    "Osaka": ExecutionPayloadEnvelopeOsaka,
-    "Amsterdam": ExecutionPayloadEnvelopeAmsterdam,
-}
 
 
 class PayloadAttributesParis(Container):

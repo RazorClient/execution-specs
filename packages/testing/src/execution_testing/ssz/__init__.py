@@ -2,8 +2,9 @@
 SSZ container types and helpers for the REST+SSZ Engine API.
 """
 
-from typing import Any, Mapping, Sequence, Type, TypeVar
+from typing import Any, Dict, Mapping, Sequence, Type, TypeVar
 
+from remerkleable.complex import Container
 from remerkleable.core import View
 
 from .constants import (
@@ -15,8 +16,6 @@ from .constants import (
     MAX_WITHDRAWALS_PER_PAYLOAD,
 )
 from .containers import (
-    EXECUTION_PAYLOAD_BY_FORK,
-    EXECUTION_PAYLOAD_ENVELOPE_BY_FORK,
     BlobAndProofV1,
     BlobAndProofV2,
     BlobCellsAndProofs,
@@ -112,6 +111,26 @@ def decode_bytes(ssz_type: Type[ViewT], data: bytes) -> ViewT:
 def hash_tree_root(value: View) -> bytes:
     """Return the 32-byte SSZ `hash_tree_root` of an SSZ value."""
     return bytes(value.hash_tree_root())
+
+
+EXECUTION_PAYLOAD_BY_FORK: Dict[str, Type[Container]] = {
+    "Paris": ExecutionPayloadParis,
+    "Shanghai": ExecutionPayloadShanghai,
+    "Cancun": ExecutionPayloadCancun,
+    "Prague": ExecutionPayloadPrague,
+    "Osaka": ExecutionPayloadOsaka,
+    "Amsterdam": ExecutionPayloadAmsterdam,
+}
+
+
+EXECUTION_PAYLOAD_ENVELOPE_BY_FORK: Dict[str, Type[Container]] = {
+    "Paris": ExecutionPayloadEnvelopeParis,
+    "Shanghai": ExecutionPayloadEnvelopeShanghai,
+    "Cancun": ExecutionPayloadEnvelopeCancun,
+    "Prague": ExecutionPayloadEnvelopePrague,
+    "Osaka": ExecutionPayloadEnvelopeOsaka,
+    "Amsterdam": ExecutionPayloadEnvelopeAmsterdam,
+}
 
 
 def _build(cls: Any, fork: str, candidates: Mapping[str, Any]) -> View:

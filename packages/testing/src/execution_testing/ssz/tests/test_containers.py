@@ -1,16 +1,38 @@
 """Round-trip and structural tests for the SSZ containers."""
 
 from remerkleable.basic import uint64, uint256
+from remerkleable.byte_arrays import ByteList
+from remerkleable.complex import List
 
-from .. import decode_bytes, encode_bytes, hash_tree_root
-from ..containers import (
+from .. import (
     EXECUTION_PAYLOAD_BY_FORK,
     EXECUTION_PAYLOAD_ENVELOPE_BY_FORK,
+    decode_bytes,
+    encode_bytes,
+    hash_tree_root,
+)
+from ..constants import (
+    MAX_BAL_BYTES,
+    MAX_BYTES_PER_EXECUTION_REQUEST,
+    MAX_BYTES_PER_TX,
+    MAX_EXECUTION_REQUESTS_PER_PAYLOAD,
+    MAX_TXS_PER_PAYLOAD,
+)
+from ..containers import (
     ExecutionPayloadAmsterdam,
     ExecutionPayloadEnvelopeAmsterdam,
     Withdrawal,
 )
 from ..ssz_types import Address, Bloom, Bytes32, Hash32, Root
+
+
+Transactions = List[ByteList[MAX_BYTES_PER_TX], MAX_TXS_PER_PAYLOAD]
+BlockAccessList = ByteList[MAX_BAL_BYTES]
+ExecutionRequests = List[
+    ByteList[MAX_BYTES_PER_EXECUTION_REQUEST],
+    MAX_EXECUTION_REQUESTS_PER_PAYLOAD,
+]
+
 
 TRANSACTIONS = [
     bytes.fromhex("02f86b01"),
@@ -44,11 +66,11 @@ def _random_payload() -> ExecutionPayloadAmsterdam:
         extra_data=bytes.fromhex("dead"),
         base_fee_per_gas=uint256(10**18),
         block_hash=Hash32(bytes.fromhex("ff" * 32)),
-        transactions=list(TRANSACTIONS),
+        transactions=Transactions(*TRANSACTIONS),
         withdrawals=[_withdrawal()],
         blob_gas_used=uint64(131_072),
         excess_blob_gas=uint64(0),
-        block_access_list=bytes.fromhex("c0de"),
+        block_access_list=BlockAccessList(bytes.fromhex("c0de")),
         slot_number=uint64(9_999),
     )
 
@@ -58,7 +80,9 @@ def _max_envelope() -> ExecutionPayloadEnvelopeAmsterdam:
     return ExecutionPayloadEnvelopeAmsterdam(
         payload=_random_payload(),
         parent_beacon_block_root=Root(bytes.fromhex("12" * 32)),
-        execution_requests=[bytes.fromhex("00aa"), bytes.fromhex("01bbcc")],
+        execution_requests=ExecutionRequests(
+            bytes.fromhex("00aa"), bytes.fromhex("01bbcc")
+        ),
     )
 
 
@@ -101,7 +125,7 @@ def test_transactions_two_level_offsets() -> None:
     assert [bytes(tx) for tx in decoded.transactions] == TRANSACTIONS
 
     reordered = _random_payload()
-    reordered.transactions = list(reversed(TRANSACTIONS))
+    reordered.transactions = Transactions(*reversed(TRANSACTIONS))
     assert hash_tree_root(reordered) != hash_tree_root(value)
 
 
