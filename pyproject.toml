@@ -481,6 +481,12 @@ exclude = [
 ]
 plugins = ["pydantic.mypy"]
 
+# `eth-remerkleable` ships no type information so treat its imports
+# as untyped instead of vendoring stubs.
+[[tool.mypy.overrides]]
+module = "remerkleable.*"
+ignore_missing_imports = true
+
 [tool.uv]
 required-version = ">=0.7.0"
 
