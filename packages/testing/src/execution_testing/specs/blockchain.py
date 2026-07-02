@@ -64,8 +64,12 @@ from execution_testing.fixtures import (
     BlockchainEngineSyncFixture,
     BlockchainEngineXFixture,
     BlockchainFixture,
+    BlockchainRestSszFixture,
     FixtureFormat,
+    FixtureRestExecutionPayload,
+    FixtureRestPayload,
     LabeledFixtureFormat,
+    PayloadStatusV2,
 )
 from execution_testing.fixtures.blockchain import (
     FixtureBlock,
@@ -562,6 +566,29 @@ class BuiltBlock(CamelModel):
             error_code=self.engine_api_error_code,
         )
 
+    def get_fixture_rest_payload(self) -> FixtureRestPayload:
+        """Get a FixtureRestPayload (REST+SSZ newPayload) from the block."""
+        payload = FixtureRestExecutionPayload.from_fixture_header(
+            fork=self.fork,
+            header=self.header,
+            transactions=self.txs,
+            withdrawals=self.withdrawals,
+            requests=self.requests,
+            block_access_list=self.block_access_list.rlp
+            if self.block_access_list
+            else None,
+        )
+        if self.expected_exception is None:
+            return FixtureRestPayload(
+                payload=payload,
+                expected_status=PayloadStatusV2.VALID,
+            )
+        return FixtureRestPayload(
+            payload=payload,
+            expected_status=PayloadStatusV2.INVALID,
+            validation_error=str(self.expected_exception),
+        )
+
     def verify_transactions(
         self, transition_tool_exceptions_reliable: bool
     ) -> List[int]:
@@ -717,6 +744,7 @@ class BlockchainTest(BaseTest):
         BlockchainEngineSyncFixture,
         BlockchainEngineXFixture,
         BlockchainEngineStatefulFixture,
+        BlockchainRestSszFixture,
     ]
     supported_execute_formats: ClassVar[Sequence[LabeledExecuteFormat]] = [
         LabeledExecuteFormat(
@@ -1502,6 +1530,59 @@ class BlockchainTest(BaseTest):
             post_verifications=PostVerifications.from_alloc(self.post),
         )
 
+    def make_rest_ssz_fixture(
+        self,
+        t8n: FillerBackend,
+    ) -> FillResult:
+        """Create a REST+SSZ blockchain fixture from the test definition."""
+        fixture_payloads: List[FixtureRestPayload] = []
+
+        pre, genesis = self.make_genesis(
+            apply_pre_allocation_blockchain=True,
+        )
+        alloc: Alloc | LazyAlloc = pre
+        env = environment_from_parent_header(genesis.header)
+        head_hash = genesis.header.block_hash
+        invalid_blocks = 0
+        for block in self.blocks:
+            built_block = self.generate_block_data(
+                t8n=t8n,
+                block=block,
+                previous_env=env,
+                previous_alloc=alloc,
+            )
+            fixture_payloads.append(built_block.get_fixture_rest_payload())
+            if block.exception is None:
+                alloc = built_block.alloc
+                env = apply_new_parent(built_block.env, built_block.header)
+                head_hash = built_block.header.block_hash
+            else:
+                invalid_blocks += 1
+
+            if block.expected_post_state:
+                self.verify_post_state(
+                    t8n,
+                    t8n_state=alloc.get()
+                    if isinstance(alloc, LazyAlloc)
+                    else alloc,
+                    expected_state=block.expected_post_state,
+                )
+        self.check_exception_test(exception=invalid_blocks > 0)
+        alloc = alloc.get() if isinstance(alloc, LazyAlloc) else alloc
+        self.verify_post_state(t8n, t8n_state=alloc)
+
+        return FillResult(
+            fixture=BlockchainRestSszFixture(
+                fork=self.fork,
+                pre=pre,
+                genesis=genesis.header,
+                payloads=fixture_payloads,
+                last_forkchoice_head=head_hash,
+            ),
+            gas_optimization=None,
+            post_verifications=PostVerifications.from_alloc(self.post),
+        )
+
     def generate(
         self,
         t8n: FillerBackend,
@@ -1518,6 +1599,8 @@ class BlockchainTest(BaseTest):
             return self.make_hive_fixture(t8n, fixture_format)
         elif fixture_format == BlockchainFixture:
             return self.make_fixture(t8n)
+        elif fixture_format == BlockchainRestSszFixture:
+            return self.make_rest_ssz_fixture(t8n)
 
         raise Exception(f"Unknown fixture format: {fixture_format}")
 

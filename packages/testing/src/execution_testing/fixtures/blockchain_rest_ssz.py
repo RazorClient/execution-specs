@@ -28,8 +28,9 @@ from execution_testing.base_types import (
     Hash,
     HexNumber,
 )
-from execution_testing.forks import Amsterdam, Fork
+from execution_testing.forks import Amsterdam, Fork, TransitionFork
 from execution_testing.ssz import envelope_bytes
+from execution_testing.test_types import Transaction, Withdrawal
 
 from .base import BaseFixture
 from .blockchain import FixtureHeader
@@ -130,6 +131,73 @@ class FixtureRestExecutionPayload(CamelModel):
     slot_number: HexNumber | None = None
     parent_beacon_block_root: Hash | None = None
     execution_requests: List[Bytes] | None = None
+
+    @classmethod
+    def from_fixture_header(
+        cls,
+        fork: Fork,
+        header: FixtureHeader,
+        transactions: List[Transaction],
+        withdrawals: List[Withdrawal] | None,
+        requests: List[Bytes] | None,
+        block_access_list: Bytes | None,
+    ) -> "FixtureRestExecutionPayload":
+        """
+        Build a payload from a sealed ``FixtureHeader`` and its block body.
+
+        The fork's per-fork SSZ shape only declares the fields that fork
+        carries, so every fork-introduced field is gated by the same fork
+        predicate the engine ``FixtureExecutionPayload`` uses, and left
+        ``None`` when the fork does not carry it. Fields are assigned
+        explicitly rather than splatted from ``model_dump`` because this model
+        is strict: it forbids the header-only keys a splat would bring and
+        renames ``number`` to ``block_number``.
+
+        ``slot_number`` is taken straight from the header, which carries it as
+        a fork-required field from Amsterdam on (``None`` before).
+        """
+        has_withdrawals = fork.header_withdrawals_required()
+        has_beacon_root = fork.engine_new_payload_beacon_root()
+        has_requests = fork.engine_new_payload_requests()
+        has_bal = fork.engine_execution_payload_block_access_list()
+        return cls(
+            fork=fork.name(),
+            parent_hash=header.parent_hash,
+            fee_recipient=header.fee_recipient,
+            state_root=header.state_root,
+            receipts_root=header.receipts_root,
+            logs_bloom=header.logs_bloom,
+            prev_randao=header.prev_randao,
+            block_number=header.number,
+            gas_limit=header.gas_limit,
+            gas_used=header.gas_used,
+            timestamp=header.timestamp,
+            extra_data=header.extra_data,
+            base_fee_per_gas=header.base_fee_per_gas,
+            block_hash=header.block_hash,
+            transactions=[tx.rlp() for tx in transactions],
+            withdrawals=(
+                [
+                    FixtureRestWithdrawal(
+                        index=w.index,
+                        validator_index=w.validator_index,
+                        address=w.address,
+                        amount=w.amount,
+                    )
+                    for w in (withdrawals or [])
+                ]
+                if has_withdrawals
+                else None
+            ),
+            blob_gas_used=header.blob_gas_used,
+            excess_blob_gas=header.excess_blob_gas,
+            block_access_list=block_access_list if has_bal else None,
+            slot_number=header.slot_number,
+            parent_beacon_block_root=(
+                header.parent_beacon_block_root if has_beacon_root else None
+            ),
+            execution_requests=requests if has_requests else None,
+        )
 
 
 class FixtureRestPayload(CamelModel):
@@ -260,7 +328,7 @@ class BlockchainRestSszFixture(BaseFixture):
         return self.fork
 
     @classmethod
-    def supports_fork(cls, fork: Fork) -> bool:
+    def supports_fork(cls, fork: Fork | TransitionFork) -> bool:
         """
         Return whether the fixture can be generated for ``fork``.
 
