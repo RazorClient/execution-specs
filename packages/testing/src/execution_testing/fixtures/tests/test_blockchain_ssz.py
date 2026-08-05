@@ -43,12 +43,15 @@ from execution_testing.test_types import Withdrawal
 
 from ..blockchain import (
     MAX_BLOCK_ACCESS_LIST_BYTES,
+    MAX_BYTES_PER_EXECUTION_REQUEST,
     MAX_BYTES_PER_TRANSACTION,
+    MAX_EXECUTION_REQUESTS_PER_PAYLOAD,
     MAX_EXTRA_DATA_BYTES,
     MAX_TRANSACTIONS_PER_PAYLOAD,
     MAX_WITHDRAWALS_PER_PAYLOAD,
     FixtureEngineNewPayload,
     FixtureExecutionPayload,
+    FixtureExecutionPayloadEnvelope,
     FixtureExecutionPayloadModifier,
     FixtureHeader,
     ForkScopedSSZModel,
@@ -176,6 +179,17 @@ class RefPayloadAmsterdam(Container):
     excess_blob_gas: uint64
     block_access_list: ByteList[MAX_BLOCK_ACCESS_LIST_BYTES]
     slot_number: uint64
+
+
+class RefEnvelopeAmsterdam(Container):
+    """Hand-written twin of FixtureExecutionPayloadEnvelope."""
+
+    payload: RefPayloadAmsterdam
+    parent_beacon_block_root: ByteVector[32]
+    execution_requests: RmkList[
+        ByteList[MAX_BYTES_PER_EXECUTION_REQUEST],
+        MAX_EXECUTION_REQUESTS_PER_PAYLOAD,
+    ]
 
 
 REF_PAYLOAD_CLASSES: Dict[str, Type[Container]] = {
@@ -582,6 +596,110 @@ def test_unknown_schema_fork_key_raises() -> None:
     schema = SSZForkSchema(base_fork="NotAFork", base=(), appended={})
     with pytest.raises(ValueError, match="not a fork class"):
         ssz_schema_fork_key(schema, Paris)
+
+
+def _envelope() -> FixtureExecutionPayloadEnvelope:
+    """Build a fully-populated Amsterdam envelope."""
+    return FixtureExecutionPayloadEnvelope(
+        payload=_payload("Amsterdam"),
+        parent_beacon_block_root=Hash(b"\x22" * 32),
+        execution_requests=[Bytes(b"\x00" + b"\x01" * 10), Bytes(b"\x01")],
+    )
+
+
+def _ref_envelope(envelope: FixtureExecutionPayloadEnvelope) -> Container:
+    """Build the remerkleable twin of ``envelope``."""
+    return RefEnvelopeAmsterdam(
+        payload=_ref_payload(envelope.payload, "Amsterdam"),
+        parent_beacon_block_root=bytes(envelope.parent_beacon_block_root),
+        execution_requests=[
+            bytes(request) for request in envelope.execution_requests
+        ],
+    )
+
+
+def test_envelope_matches_reference() -> None:
+    """The newPayload envelope is byte-identical to its twin."""
+    envelope = _envelope()
+    assert_matches_reference(envelope, _ref_envelope(envelope), "Amsterdam")
+
+
+def test_envelope_ssz_field_order() -> None:
+    """The envelope wire order is pinned."""
+    assert ssz.ssz_fields(FixtureExecutionPayloadEnvelope, Amsterdam) == (
+        "payload",
+        "parent_beacon_block_root",
+        "execution_requests",
+    )
+
+
+def test_envelope_pre_amsterdam_raises() -> None:
+    """The envelope is undefined before Amsterdam."""
+    with pytest.raises(ValueError, match="predates"):
+        FixtureExecutionPayloadEnvelope.ssz_fork_key(Osaka)
+
+
+def test_from_fixture_header_populates_new_payload_ssz() -> None:
+    """An Amsterdam fill populates the SSZ request field."""
+    requests = [Bytes(b"\x00" + b"\x01" * 10)]
+    new_payload = FixtureEngineNewPayload.from_fixture_header(
+        fork=Amsterdam,
+        header=_amsterdam_header(),
+        transactions=[],
+        withdrawals=[],
+        requests=requests,
+        block_access_list=Bytes(b"\xc0"),
+    )
+    assert new_payload.new_payload_ssz is not None
+    envelope = FixtureExecutionPayloadEnvelope.ssz_decode(
+        bytes(new_payload.new_payload_ssz), Amsterdam
+    )
+    assert envelope.payload == new_payload.params[0]
+    assert envelope.execution_requests == requests
+    assert "newPayloadSsz" in to_json(new_payload)
+
+
+def test_new_payload_ssz_absent_pre_amsterdam() -> None:
+    """A pre-Amsterdam fill leaves the SSZ request field unset."""
+    new_payload = FixtureEngineNewPayload.from_fixture_header(
+        fork=Cancun,
+        header=_amsterdam_header(),
+        transactions=[],
+        withdrawals=[],
+        requests=None,
+    )
+    assert new_payload.new_payload_ssz is None
+    assert "newPayloadSsz" not in to_json(new_payload)
+
+
+def test_modified_payload_carries_no_ssz() -> None:
+    """A modifier-stripped payload cannot be SSZ-encoded."""
+    new_payload = FixtureEngineNewPayload.from_fixture_header(
+        fork=Amsterdam,
+        header=_amsterdam_header(),
+        transactions=[],
+        withdrawals=[],
+        requests=[],
+        block_access_list=Bytes(b"\xc0"),
+        execution_payload_modifier=FixtureExecutionPayloadModifier(
+            block_access_list=FixtureExecutionPayloadModifier.REMOVE_FIELD,
+        ),
+    )
+    assert new_payload.new_payload_ssz is None
+
+
+def test_payload_over_consensus_cap_carries_no_ssz() -> None:
+    """A payload exceeding an SSZ list cap cannot be SSZ-encoded."""
+    over_cap = [_withdrawal(i) for i in range(MAX_WITHDRAWALS_PER_PAYLOAD + 1)]
+    new_payload = FixtureEngineNewPayload.from_fixture_header(
+        fork=Amsterdam,
+        header=_amsterdam_header(),
+        transactions=[],
+        withdrawals=over_cap,
+        requests=[],
+        block_access_list=Bytes(b"\xc0"),
+    )
+    assert new_payload.new_payload_ssz is None
 
 
 def test_describe_schema_amsterdam() -> None:

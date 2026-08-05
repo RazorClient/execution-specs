@@ -419,6 +419,12 @@ MAX_WITHDRAWALS_PER_PAYLOAD = 2**4
 MAX_BLOCK_ACCESS_LIST_BYTES = 2**23
 """Placeholder cap for the RLP-encoded block access list byte list."""
 
+MAX_EXECUTION_REQUESTS_PER_PAYLOAD = 2**8
+"""Maximum execution request count per payload (execution-apis)."""
+
+MAX_BYTES_PER_EXECUTION_REQUEST = MAX_BYTES_PER_TRANSACTION
+"""Placeholder cap for a single encoded execution request."""
+
 
 class ForkScopedSSZModel(SSZModel):
     """SSZ model whose methods resolve ``Fork`` classes to schema keys."""
@@ -535,6 +541,32 @@ class FixtureExecutionPayload(ForkScopedSSZModel):
         )
 
 
+class FixtureExecutionPayloadEnvelope(ForkScopedSSZModel):
+    """
+    SSZ envelope for the ``engine_newPayload`` request.
+
+    Blob versioned hashes are omitted: the execution layer recomputes
+    them from ``payload.transactions``.
+    """
+
+    payload: FixtureExecutionPayload
+    parent_beacon_block_root: Hash
+    execution_requests: Annotated[
+        List[Annotated[Bytes, byte_list(MAX_BYTES_PER_EXECUTION_REQUEST)]],
+        ssz_list(MAX_EXECUTION_REQUESTS_PER_PAYLOAD),
+    ]
+
+    __ssz_schema__ = SSZForkSchema(
+        base_fork=Amsterdam,
+        base=(
+            "payload",
+            "parent_beacon_block_root",
+            "execution_requests",
+        ),
+        appended={},
+    )
+
+
 class FixtureExecutionPayloadModifier(CamelModel):
     """
     Modifier for ``FixtureExecutionPayload`` fields, used to construct
@@ -628,6 +660,13 @@ class FixtureEngineNewPayload(CamelModel):
             "payloads (e.g. BlockchainEngineStatefulFixture "
             "setupEngineNewPayloads vs engineNewPayloads) without "
             "re-inferring from tx metadata."
+        ),
+    )
+    new_payload_ssz: Bytes | None = Field(
+        None,
+        description=(
+            "SSZ-encoded `engine_newPayload` request envelope; only "
+            "populated for forks that define the SSZ request format."
         ),
     )
 
@@ -769,12 +808,32 @@ class FixtureEngineNewPayload(CamelModel):
             EngineNewPayloadParameters,
             tuple(params),
         )
+
+        new_payload_ssz: Bytes | None = None
+        if fork >= Amsterdam:
+            envelope = FixtureExecutionPayloadEnvelope(
+                payload=execution_payload,
+                parent_beacon_block_root=header.parent_beacon_block_root,
+                execution_requests=requests,
+            )
+            try:
+                new_payload_ssz = envelope.ssz_encode(fork)
+            except Exception:
+                # Payloads with no SSZ representation carry no encoding:
+                # a modifier stripped or injected fields the ``fork``
+                # schema does not accept, or the payload exceeds a
+                # consensus cap (e.g. more withdrawals than
+                # ``MAX_WITHDRAWALS_PER_PAYLOAD``; remerkleable raises
+                # bare ``Exception`` for these).
+                new_payload_ssz = None
+
         # Auto-derive phase from transactions if the caller did not pass one.
         kwargs.setdefault("phase", cls.derive_phase(transactions))
         new_payload = cls(
             params=payload_params,
             new_payload_version=new_payload_version,
             forkchoice_updated_version=forkchoice_updated_version,
+            new_payload_ssz=new_payload_ssz,
             **kwargs,
         )
 
